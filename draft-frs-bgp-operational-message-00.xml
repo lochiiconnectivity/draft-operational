@@ -1,0 +1,1010 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+
+CHANGES:
+
+170611(df):
+
+Modifications from meeting, RS, RR 17/06/11 @clara
+
+- Rewrote section "On the use of STATE and DUMP TLVs"
+- Renamed ADS to ADM (since ASM would be ASS)
+- Added ASM (and added extra to "On the use of ADVISE TLVs")
+- Changed all occurrences of "peer" to "neighbor" in standards language (i.e not in use cases)
+- Added BUSY NS Subcode
+- Added to sec considerations
+- Implemented YMBK BGP Max Size
+- Implemented NS "Not Found"
+- Implemented SSQ/SSP
+- Implemented multifaceting of PRI
+- Changed "Not Supported" to "Not Satisfied"
+
+040611(df):
+
+Modifications from RR:
+
+- Changed title to "draft-frs-bgp-operational-message" 
+- Changed order of authors to alphabetical
+- Updated Date
+- Changed Status to "Standards Track" (info->std)
+- Changed ADS payload from ASCII to UTF-8
+- Changed descriptions of LPCQ and LPCP to indicate "BGP" (Loc-Rib)
+- Changed format of PRI to refer to NLRI documentation
+- Changed Acknowledgements (Merged diagnostic acks)
+- Removed "Not Allowed" and "Not Available", replaced with "Not Supported" and "Max Permitted"
+
+
+290511(df): 
+
+- Removed reference to flags from capability
+- Removed all references to proxying
+
+260511(df): Minutes from Call
+
+Agreed the following types:
+
+  Type 1 - Advisory String
+
+  Type 2 - Number of Reachable Prefixes Transmitted/Received
+  Type 3 - Number of prefixes in BGP_RIB_Out
+  Type 4 - Number of prefixes present in BGP_RIB
+
+  Type 5 - Prefixes present in dropped attribute message
+  Type 6 - Prefixes present in malformed attribute message
+  Type 7 - Entire malformed update message enclosure
+
+  Type 8 - Prefix specific BGP query
+  Type 9 - Prefix specific BGP response
+
+  Type 10 - BGP attribute specific prefix query
+  Type 11 - BGP attribute specific prefix response
+
+...
+  
+  Type 65534 - "Not Allowed" Response
+  Type 65535 - "Not Available" Response
+
+Agreed that types 5 and 6 will be structured using reach/unreach and will be per AFI/SAFI
+
+Agreed that response types of "Not Allowed" and "Not Available" will be 
+defined using reserved values.
+
+
+
+-->
+
+
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+<!ENTITY RFC1997 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.1997.xml">
+<!ENTITY RFC2119 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC2629 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2629.xml">
+<!ENTITY RFC3552 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3552.xml">
+<!ENTITY RFC3640 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3640.xml">
+<!ENTITY RFC4271 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4271.xml">
+<!ENTITY RFC4360 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4360.xml">
+<!ENTITY RFC4760 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4760.xml">
+<!ENTITY RFC4893 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4893.xml">
+<!ENTITY RFC5492 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.5492.xml">
+<!ENTITY draft-jasinska-ix-bgp-route-server-02 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.jasinska-ix-bgp-route-server.xml">
+<!ENTITY draft-ietf-idr-advisory-00 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-idr-advisory.xml">
+<!ENTITY draft-raszuk-bgp-diagnostic-message-02 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.raszuk-bgp-diagnostic-message.xml">
+<!ENTITY draft-shakir-idr-ops-reqs-for-bgp-error-handling-01 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.shakir-idr-ops-reqs-for-bgp-error-handling.xml">
+<!ENTITY draft-retana-bgp-security-state-diagnostic-00 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.retana-bgp-security-state-diagnostic.xml">
+<!ENTITY draft-nalawade-bgp-soft-notify-01 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.nalawade-bgp-soft-notify.xml">
+<!ENTITY draft-nalawade-bgp-inform-02 SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.nalawade-bgp-inform.xml">
+]>
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<?rfc toc="yes" ?>
+<?rfc symrefs="yes" ?>
+<?rfc sortrefs="yes"?>
+<?rfc iprnotified="no" ?>
+<?rfc strict="yes" ?>
+<rfc category="std" ipr="trust200902" docName="draft-frs-bgp-operational-message-00">
+	<front>
+		<title abbrev="bgp-operational-message">
+    	 	    BGP OPERATIONAL Message
+                 </title>
+		<author initials="D." surname="Freedman" fullname="David Freedman">
+			<organization abbrev="Claranet">
+                        Claranet
+                    </organization>
+			<address>
+				<postal>
+					<street/>
+					<city>London</city>
+					<country>UK</country>
+				</postal>
+				<email>david.freedman@uk.clara.net</email>
+			</address>
+		</author>
+		<author initials="R" surname="Raszuk" fullname="Robert Raszuk">
+			<organization>Cisco Systems</organization>
+			<address>
+				<postal>
+					<street>170 West Tasman Drive</street>
+					<city>San Jose</city>
+					<region>CA</region>
+					<code>95134</code>
+					<country>US</country>
+				</postal>
+				<email>raszuk@cisco.com</email>
+			</address>
+		</author>
+		<author initials = 'R.' surname='Shakir' fullname='Rob Shakir'>
+            <organization abbrev='C&amp;W'>
+                Cable&amp;Wireless Worldwide
+            </organization>
+            <address>
+		<postal>
+			<street/>
+			<city>London</city>
+			<country>UK</country>
+		</postal>
+                <email>rjs@cw.net</email>
+            </address>
+        </author>
+		<date month="June" year="2011"/>
+		<area>Routing</area>
+		<workgroup>IDR Working Group</workgroup>
+		<keyword>I-D</keyword>
+		<keyword>Internet-Draft</keyword>
+		<keyword>IDR</keyword>
+		<keyword>BGP</keyword>
+		<keyword>OPERATIONAL</keyword>
+		<keyword>ADVISORY</keyword>
+		<keyword>DIAGNOSTIC</keyword>
+		<abstract>
+			<t>
+				The BGP Version 4 routing protocol (RFC4271) is now used in many ways, crossing boundaries of administrative and technical 
+				responsibility. 
+			</t>
+			<t>
+				The protocol lacks an operational messaging plane which could be utilised to diagnose, troubleshoot and inform upon
+				various conditions across these boundaries, securely, during protocol operation, without disruption. 
+			</t>
+			<t>
+				This document proposes a new BGP message type, the OPERATIONAL message, which can be used to effect such a messaging plane for 
+				use both between and within Autonomous Systems.
+			</t>
+		</abstract>
+	</front>
+	<middle>
+		<section anchor="introduction" title="Introduction">
+			<t>	
+				In this document, a new BGP message type, the OPERATIONAL message is defined, creating a communication channel over which messages
+				can be passed, using a series of contained TLV elements. 
+			</t>
+			<t> 
+				The messages can be human readable, for the attention of device operators or machine readable, in order to provide simple self test routines,
+				which can be exchanged between BGP speakers.
+			</t>
+			<t>
+				A number of TLV elements will be assigned to provide for these message types, along with TLV elements to assist with description of the message data, 
+				such as describing precisely BGP prefixes and encapsulating BGP UPDATE messages to be sent back for inspection in order to troubleshoot
+				session malfunctions. 
+			</t>
+			<t>
+				The use of OPERATIONAL messages will be negotiated by BGP Capability <xref target="RFC5492"/>, since the messages are in-band with the BGP
+				session, they can be assumed to either be authenticated as originating directly from the BGP neighbor. 
+			</t>
+			<t>
+				The goal of this document is to provide a simple, extensible framework within which new messaging and diagnostic requirements can live.
+			</t>
+		</section>
+		
+		<section title="Applications">
+
+			<t> 
+				The authors would like to propose three main applications which BGP OPERATIONAL TLVs are designed to address. 
+				New TLVs can be easily added to enhance further current applications or to propose new applications.
+			</t>
+			
+			<t>The set of TLVs is organised in the following four functional groups comprising the three applications and some control messaging:</t>
+			
+			<t>
+				<list style="symbols">
+					<t> 
+						ADVISE TLVs, designed to convey human readable information to be passed, cross boundary to operators, to inform them of past or upcoming
+						error conditions, or provide other relevant, in-band operational information. The "Advisory Demand Message" 
+						ADM (<xref target="advisory-demand-message"/>) is an example of this. 
+					</t>
+					<t>
+						STATE TLVs, designed to carry information about BGP state across BGP neighbors, including both per-neighbor and global counters. 
+					</t>
+					
+					<t>
+						DUMP TLVs, designed to describe or encapsulate data to assist in realtime or post-mortem diagnostics, such as structured representations
+						of affected prefixes / NLRI and encapsulated raw UPDATE messages for inspection.
+					</t>
+					
+					<t>
+						CONTROL TLVs, designed to facilitate control messaging such as replies to requests which can not be satisfied.
+					</t>
+					
+				</list>
+		</t>
+		
+		<t> 
+			Means concerning the reporting of information carried by these TLVs, either in reply or request processing 
+			are implementation specific but could include methods such as SYSLOG.
+		</t>
+			
+			
+		</section>
+		<section anchor="bgp-operational-message" title="BGP OPERATIONAL message">
+			<section anchor="capability" title="BGP OPERATIONAL message capability">
+				<t>
+					A BGP speaker that is willing to exchange BGP OPERATIONAL Messages with a neighbor should advertise the 
+					new OPERATIONAL Message Capability to the neighbor using BGP Capabilities advertisement <xref target="RFC5492"/> . 
+					A BGP speaker may send an OPERATIONAL message to its neighbor only if it has received the OPERATIONAL message 
+					capability from them.
+				</t>
+
+				<t>
+					The Capability Code for this capability is specified in the IANA
+					Considerations section of this document.
+				</t>
+
+				<t>The Capability Length field of this capability is 2 octets. 
+				</t>
+
+				<figure title='OPERATIONAL message BGP Capability Format'>
+				<preamble></preamble>
+				<artwork align='center'>
+
++------------------------------+
+| Capability Code (1 octet)    |
++------------------------------+
+| Capability Length (1 octet)  |
++------------------------------+
+
+
+				</artwork>
+				<postamble>
+				</postamble>
+				</figure>
+
+			</section>
+			<section anchor="encoding" title="BGP OPERATIONAL message encoding">
+				
+				<t>
+					The BGP message as defined <xref target="RFC4271"/> consists of a fixed-size header followed by two octet length field and one octet of type value. 
+					The RFC limits the maximum message size to 4096 octets. As one of the applications of BGP OPERATIONAL message (through the MUD 
+					(<xref target="malformed-update-dump"/>) message) is to be able to carry an entire, potentially malformed BGP UPDATE, this specification mandates 
+					that when the neighbor has negotiated the BGP OPERATIONAL message capability, any further BGP message which may be subject enclosure 
+					within a BGP OPERATIONAL message must be sent with the maximum size reduced to accommodate for the potential need of additional wrapping header 
+					size requirements. This is applicable to both the current BGP maximum message size limit or for any future modifications.
+				</t>
+
+				<t>
+					For the purpose of the OPERATIONAL message information encoding we will use one or more Type-Length-Value containers where each TLV will have the following format:</t>
+
+				<figure title='OPERATIONAL message TLV Format'>
+					<preamble></preamble>
+					<artwork align='center'>
+
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|      Type (2 octets)         |        Length (2 octets)       | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                     Variable size TLV value                   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+					</artwork>
+					<postamble></postamble>
+				</figure>
+				
+				<t>
+					TYPE: 2 octet value indicating the TLV type
+				</t>
+				<t>
+					LENGTH: 2 octet value indicating the TLV length in octets
+				</t>
+				<t>
+					VALUE: Variable length value field depending on the type of the TLVs carried.
+				</t>
+				
+				<t> 
+					To work around continued BGP churn issues some types of TLVs
+					will need to contain a sequence number to correlate a request with
+					associated replies. The sequence number will consist of 8 octets
+					and will be of the form: (4 octet bgp_router_id) + (local 4 octet number).
+					When the local 4 octet number reaches 0xFFF it should restart from
+					0x0000. 
+					The sequence number is only used if the TLV requires sequencing else it is not included.	
+				</t>
+				
+				<t> 
+					The typical application scenario for use of the sequence number is for it to
+					be included in a request TLV to be copied into associated reply messages in order
+					to correlate requests with their associated replies.
+				</t>
+			</section>
+			
+			<section anchor="pri-format" title="PRI Format">
+			
+				<t> 
+					Prefix Reachability Indicators (PRI) are used to represent prefix NLRI and BGP attributes in a request 
+					and only prefix NLRI in a response, in this draft. 
+				</t>
+				<t>
+					Each PRI is encoded as a 3-tuple of the form &lt;Flags, Payload Type, Payload&gt; whose fields
+					are described below:	
+				</t>
+
+				<figure>
+					<preamble></preamble>
+					<artwork align='center'>
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|      Flags (1 octet)         |      Payload Type (1 octet)    | 
++---------------------------------------------------------------+
+|                     Payload (Variable)                        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+					</artwork>
+					<postamble></postamble>
+				</figure>
+
+				<t>
+					The use and the meaning of these fields are as follows:
+				</t>
+				
+				<t>
+					<list style="hanging">
+						<t hangText="a) Flags:">
+							<vspace />
+							Four bits indicating NLRI Reachability:
+
+							<list style="hanging">
+								<t hangText="aa) R Bit:">
+									<vspace />
+									The R (Reachable) bit, if set represents that the prefixes were deemed reachable in the NLRI,
+									else represents that the prefixes were deemed unreachable. This bit is meaningless in the context of 
+									all currently defined requests and can thus only be found in a response. If found in a request an 
+									implementation MUST ignore its state.
+								</t>
+								<t hangText="ab) I Bit:">
+									<vspace />
+									The I (Adj-RIB-In) bit, if set in a query, indicates that the requestor wishes for the response to 
+									be found in the Adj-RIB-In of the neighbor representing this session, if cleared indicates that
+									the Adj-RIB-In of the neighbor representing this session is not searched.
+									If set in a response, indicates that the Adj-RIB-In of the neighbor representing this session
+									contained this information, if cleared it did not. 
+								</t>
+								<t hangText="ac) O Bit:">
+									<vspace />
+									The O (Adj-RIB-Out) bit, if set in a query, indicates that the requestor wishes for the response to 
+									be found in the Adj-RIB-Out of the neighbor representing this session, if cleared indicates that
+									the Adj-RIB-Out of the neighbor representing this session is not searched.
+									If set in a response, indicates that the Adj-RIB-Out of the neighbor representing this session
+									contained this information, if cleared it did not.
+								</t>
+								<t hangText="ad) L Bit:">
+									<vspace />
+									The L (Loc-RIB) bit, if set in a query, indicates that the requestor wishes for the response to 
+									be found in the BGP Loc RIB of the neighbor, if cleared indicates that the Loc-RIB of the neighbor 
+									is not searched.
+									If set in a response, indicates that the Loc-RIB of the neighbor contained this information, if cleared 
+									it did not.
+								</t>
+							</list>
+							The rest of the field is reserved for future use.
+						</t>
+						<t hangText="b) Payload Type:">
+							<vspace />
+								This one octet type specifies the type and geometry of the payload.
+								<list style="hanging">
+									<t hangText="ba) Type 0 - NLRI:">
+										<vspace />
+										The payload contains (perhaps multiple) NLRI, the format of each NLRI is as defined 
+										in the base specification of such NLRI appropriate for the AFI/SAFI.
+									</t>
+									<t hangText="bb) Type 1 - Next Hop:">
+										<vspace />
+										The payload contains a Next Hop address, appropriate for the AFI/SAFI. When used 
+										in an SSQ (<xref target="simple-state-request"/>) message the response is expected to contain
+										prefixes from the selected RIBs which contain this next-hop in their next-hop attribute.
+									</t>
+									<t hangText="bc) Type 2 - AS Number:">
+										<vspace />
+										The payload contains a 16 or 32 bit AS number (as defined in <xref target="RFC4893"/>), when
+										used in an SSQ message the response is expected to contain prefixes from the selected RIBs 
+										which contain this AS number in their AS_PATH or AS4_PATH (as appropriate) attributes.
+									</t>
+									<t hangText="bc) Type 3 - Standard Community:"> 
+										<vspace />
+										The payload contains a standard community (as defined in <xref target="RFC1997"/>), when
+										used in an SSQ message the response is expected to contain prefixes from the selected RIBs 
+										which contain this standard community in their communities attribute.
+									</t>
+									<t hangText="bd) Type 4 - Extended Community:"> 
+										<vspace />
+										The payload contains an extended community (as defined in <xref target="RFC4360"/>), when
+										used in an SSQ message the response is expected to contain prefixes from the selected RIBs 
+										which contain this standard community in their extended communities attribute.
+									</t>
+									<t hangText="be) Types 5-65535 - Reserved:"> 
+										<vspace />
+										Types 5-65535 are reserved for future use.
+									</t>
+								</list>
+						</t>	
+						<t hangText="c) Payload:">
+							<vspace />
+								Contains the actual payload, as defined by the payload type, the payload is of variable length, 
+								to be calculated from the remaining TLV length.
+						</t>
+					</list>
+				</t>
+				<t>
+					PRI are used for both request and response modes, a response MUST only contain an NLRI (type 0) payload but a request MAY contain
+					payloads specifying a type to search for, an implementation MUST validate all PRI it receives in a request against
+					the type of request which was made.
+				</t>
+				<t>
+					An implementation MUST NOT send a PRI in response with no NLRI (type 0) payload, this is considered to be invalid.
+					If the implementation wishes to signal that a request did not yield a any valid results an implementation
+					MAY respond with an NS TLV (<xref target="not-satisfied"/>), using the "Not Found" subcode, for example.
+				</t>
+									
+				</section>
+								
+			
+			
+			<section anchor="tlvs" title="BGP OPERATIONAL message TLVs">
+				
+					
+				<section anchor="advise-tlvs" title="ADVISE TLVs">
+					<t>
+						ADVISE TLVs convey human readable information to be passed, cross boundary to operators, to inform them of past or upcoming
+						error conditions, or provide other relevant, in-band operational information.
+					</t>
+					<section anchor="advisory-demand-message" title="Advisory Demand Message (ADM)">
+						
+						<t>
+							TYPE: 1 - ADM
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Variable value (up to 2K octets)
+						</t>
+						<t>
+							USE: To carry a message, on demand, comprised of a string of UTF-8
+							characters (up to 2K octets in size), with no null termination. 
+							Upon reception, the string SHOULD be reported to the host's administrator. 
+						</t>
+						<t>
+							Implementations SHOULD provide their users the ability to 
+							transmit a free form text message generated by user input.
+						</t>
+					</section>
+					<section anchor="advisory-static-message" title="Advisory Static Message (ASM)">
+						<t>
+							TYPE: 2 - ASM
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Variable value (up to 2K octets)
+						</t>
+						<t>
+							USE: To carry a message, on demand, comprised of a string of UTF-8
+							characters, with no null termination. Upon reception, the 
+							string SHOULD be stored in the BGP neighbor statistics field 
+							within the router. The string SHOULD be accessible to the operator 
+							by executing CLI commands or any other method (local or remote) to 
+							obtain BGP neighbor statistics (e.g. NETCONF, SNMP).
+						</t>
+						<t>
+							The expectation is that the last ASM received from a BGP neighbor 
+							will be the message visible to the operator (the most current ASM).
+						</t>
+						<t>
+							Implementations SHOULD provide their users the ability to 
+							transmit a free form text message generated by user input.
+						</t>
+					</section>
+				</section>
+				
+				
+				<section anchor="state-tlvs" title="STATE TLVs">
+					
+					<t>
+						STATE TLVs reflect, on demand, the internal state of a BGP neighbor as seen from the other neighbor's perspective.
+					</t>
+					
+					<section anchor="reachable-prefix-count-request" title="Reachable Prefix Count Request (RPCQ)">
+						<t>
+							TYPE: 3 - RPCQ
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number
+						</t>
+						<t>
+							USE: Sent to the neighbor to request that an RPCP (<xref target="reachable-prefix-count-reply"/>) message is generated in response.
+						</t>
+					</section>
+					
+					<section anchor="reachable-prefix-count-reply" title="Reachable Prefix Count Reply (RPCP)">
+						<t>
+							TYPE: 4 - RPCP
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number +  4 Octet RX Prefix Counter (RXC) + 4 Octet TX Prefix Counter (TXC)
+						</t>
+						<t>
+							USE: Sent in reply to an RPCQ (<xref target="reachable-prefix-count-request"/>) message
+							from a neighbor, RXC is populated with the number of reachable prefixes accepted from the peer 
+							and TXC with the number of prefixes to be transmitted to the peer for the AFI/SAFI.
+						</t>
+					</section>
+					
+					<section anchor="adj-rib-out-count-request" title="Adj-Rib-Out Prefix Count Request (APCQ)">
+						<t>
+							TYPE: 5 - APCQ
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number
+						</t>
+						<t>
+							USE: Sent to the neighbor to request that an APCP (<xref target="adj-rib-out-count-reply"/>) message 
+							is generated in response. 
+						</t>
+						<t>
+							APCQ can be used as a simple mechanism when an implementation does not permit or support the use of RPCQ.
+						</t>
+					</section>
+					
+					<section anchor="adj-rib-out-count-reply" title="Adj-Rib-Out Prefix Count Reply (APCP)">
+						<t>
+							TYPE: 6 - APCP
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number + 4 Octet TX Prefix Counter (TXC)
+						</t>
+						<t>
+							USE: Sent in reply to an APCQ (<xref target="adj-rib-out-count-request"/>) message
+							from a neighbor, TXC is populated with the number of prefixes held in the Adj-Rib-Out for the
+							neighbor for the AFI/SAFI. 
+						</t>
+					</section>
+					
+					<section anchor="loc-rib-count-request" title="BGP Loc-Rib Prefix Count Request (LPCQ)">
+						<t>
+							TYPE: 7 - LPCQ
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number
+						</t>
+						<t>
+							USE: Sent to the peer to request that an LPCP (<xref target="loc-rib-count-reply"/>) message 
+							is generated in response. 
+						</t>
+					</section>
+					
+					<section anchor="loc-rib-count-reply" title="BGP Loc-Rib Prefix Count Reply (LPCP)">
+						<t>
+							TYPE: 8 - LPCP
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number + 4 Octet Loc-Rib Counter (LC)
+						</t>
+						<t>
+							USE: Sent in reply to an LPCQ (<xref target="loc-rib-count-request"/>) message
+							from a neighbor, LC is populated with the number of prefixes held in the entire Loc-Rib
+							for the AFI/SAFI.
+						</t>
+					</section>
+					<section anchor="simple-state-request" title="Simple State Request (SSQ)">
+						<t>
+							TYPE: 9 - SSQ
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number + Single request PRI (Variable)
+						</t>
+						<t>
+							USE: Using a PRI as a request form (See <xref target="pri-format"/>), an implementation
+							can be asked to return information about prefixes found in various RIBs.
+						</t>
+						<t> 
+							A single, simple PRI is used in the request, containing a single NLRI or attribute as
+							the PRI payload. RIB response filtering may take place through the setting of the 
+							I, O and L bits in the PRI Flags field.
+						</t>
+						<t> 
+							An implementation MAY respond to an SSQ TLV in with an SSP (See <xref target="simple-state-response"/>) 
+							TLV (containing the appropriate data).
+							An implementation MAY also respond to an SSQ with an NS TLV (with the appropriate subcode set) indicating
+							why there will not be an SSP TLV in response.
+							An implementation MAY also not respond at all (See <xref target="SEC"/>).
+						</t>
+					</section>
+				
+				</section>
+
+				<section anchor="dump-tlvs" title="DUMP TLVs">
+					
+					<t>
+						DUMP TLVs provide data in both structured and unstructured formats in response to events, for use in debugging scenarios.
+					</t>
+					
+					<section anchor="dropped-update-prefixes" title="Dropped Update Prefixes (DUP)">
+						<t>
+							TYPE: 10 - DUP
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Variable number of dropped UPDATE Prefix Reachability 
+							Indicators (PRI) (See <xref target="pri-format"/>)
+						</t>
+						<t>
+							USE: To report to a neighbor a structured set of prefix reachability indicators retrievable 
+							from the last dropped UPDATE message, sent in response to an UPDATE message which was 
+							well formed but not accepted by the neighbor by policy.
+						</t>
+						<t> 
+							For example, an UPDATE which was dropped and the rescued NLRI concerned a number of 
+							both reachable and unreachable prefixes, the DUP would encapsulate two PRI, one with 
+							the R-Bit (reachable) set, housing the rescued reachable NLRI and the other with the
+							R-Bit cleared (unreachable), housing the rescued unreachable NLRI as payload.
+						</t>
+					</section>
+					<section anchor="malformed-update-prefixes" title="Malformed Update Prefixes (MUP)">
+						<t>
+							TYPE: 11 - MUP
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Variable number of dropped update Prefix Reachability 
+							Indicators (PRI) (See <xref target="pri-format"/>) due to UPDATE Malformation.
+						</t>
+						<t>
+							USE: To report to a neighbor a structured set of prefix reachability indicators retrievable 
+							from the last UPDATE message dropped through malformation, sent in response to an UPDATE message 
+							which was not well formed and not accepted by the neighbor, where a NOTIFICATION message was not sent.
+							A MUP TLV may accompany a MUD (<xref target="malformed-update-dump"/>) TLV.
+						</t>
+						<t> 
+							See the example from <xref target="dropped-update-prefixes"/>.
+						</t>
+					</section>
+					<section anchor="malformed-update-dump" title="Malformed Update Dump (MUD)">
+						<t>
+							TYPE: 12 - MUD
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Variable length representing retrievable malformed update octet stream.
+						</t>
+						<t>
+							USE: To report to a peer a copy of the last UPDATE message dropped through malformation, sent in response 
+							to an UPDATE message which was not well formed and not accepted by the neighbor, where a NOTIFICATION message was not sent.
+							A MUD TLV may accompany a MUP (<xref target="malformed-update-prefixes"/>) TLV.
+						</t>
+					</section>
+					<section anchor="simple-state-response" title="Simple State Response (SSP)">
+						<t>
+							TYPE: 13 - SSP
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number + Single Response PRI (Variable)
+						</t>
+						<t>
+							USE: Using a PRI as a response form (See <xref target="pri-format"/>), an implementation
+							uses the SSP TLV to return a response to an SSQ (See <xref target="simple-state-request"/>) TLV
+							which should contain information about prefixes found in various RIBs.
+							These RIBs should be walked to extract the information according to local policy.
+						</t>
+						<t> 
+							A single, simple PRI is used in the response, containing multiple NLRI.
+							The I, O and L bits in the PRI Flags field should be set indicating which RIBs 
+							the prefixes were found in.
+						</t>
+						<t> 
+							An implementation MAY respond to an SSQ TLV in with an SSP TLV (containing the appropriate data).
+							An implementation MAY also respond to an SSQ with an NS TLV (with the appropriate subcode set) indicating
+							why there will not be an SSP TLV in response. 
+							An implementation MAY also not respond at all (See <xref target="SEC"/>).
+						</t>
+						<t>
+							If no data is found to satisfy a query which is permitted to be answered, an implementation MAY respond
+							with an NS TLV with the subcode "Not Found" to indicate that no data was found in response to the query.
+							An implementation MUST NOT send a PRI in response with no NLRI payload, this is considered to be invalid.
+						</t>
+					</section>
+				</section>
+				
+				<section anchor="control-tlvs" title="CONTROL TLVs">
+					
+					
+					<t>
+						CONTROL TLVs satisfy control mechanism messaging between neighbors, they are used for such functions 
+						as to refuse messages and dynamically signal OPERATIONAL capabilities to neighbors during operation. 
+					</t>
+					
+					
+					<section anchor="max-permitted" title="Max Permitted (MP)">
+						<t>
+							TYPE: 65534 - MP
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + 2 Octet Value
+						</t>
+						<t>
+							USE: The Max Permitted TLV is used to signal to the neighbor the maximum number of OPERATIONAL messages that will be accepted
+							in a second of time (see <xref target="SEC"/>, Security Considerations), an implementation MUST, on receipt of an MP TLV, 
+							ensure that it does not exceed the rate specified in the MP TLV for sending OPERATIONAL messages to the neighbor, for the duration 
+							of the session.
+						</t>
+						<t> 
+							An implementation MAY send subsequent MP TLVs during the session's lifetime, updating the maximum acceptable rate
+						</t>
+						<t>
+							MP TLVs MAY be rate limited by the receiver as part of OPERATIONAL rate limiting (see <xref target="SEC"/>, Security Considerations).
+						</t>
+					</section>
+					<section anchor="not-satisfied" title="Not Satisfied (NS)">
+						<t>
+							TYPE: 65535 - NS
+						</t>
+						<t>
+							LENGTH: 3 Octets(AFI+SAFI) + Sequence Number + 2 Octet Error Subcode
+						</t>
+						<t>
+							USE: To respond to a query to indicate that the implementation can or will not answer this query.
+							The following subcodes are defined:
+						</t>
+						<t>
+							<list style="hanging">
+								<t hangText="0x01 - Request TLV Malformed:">
+									Used to signal to the neighbor that the request was malformed and will not be processed. 
+									A neighbor on receiving this message MAY re-transmit the request but MUST increment the sequence number.
+									Implementations SHOULD ensure that the same request is not retransmitted excessively when
+									repeatedly receiving this Error Subcode in response.
+								</t>
+								<t hangText="0x02 - TLV Unsupported for this neighbor:">
+									Used to signal to the neighbor that the request was unsupported and will not be processed. 
+									A neighbor on receiving this message MUST NOT retransmit the request for the duration of the session.
+								</t>
+								<t hangText="0x03 - Max query frequency exceeded:">
+									Used to signal to the neighbor that the request has exceeded the rate at which the neighbor finds acceptable
+									for the implementation to transmit requests at, see <xref target="max-permitted"/> (MP TLV) 
+									and <xref target="SEC"/> and (Security Considerations) for more information.
+								</t>
+								<t hangText="0x04 - Administratively prohibited:">
+									Used to signal to the neighbor that the request was administratively prohibited and will not be processed. 
+									A neighbor on receiving this message MUST NOT retransmit the request for the duration of the session.
+								</t>
+								<t hangText="0x05 - Busy:">
+									Used to signal to the neighbor that the request will not be replied to, due to lack of resources estimated
+									to satisfy the request. It is suggested that, on receipt of this error subcode a message is logged to inform
+									the operator of this failure as opposed to automatically attempting to re-try the previous query. 
+								</t>
+								<t hangText="0x06 - Not Found:">
+									Used to signal to the neighbor that the request would have been replied to but does not contain any data
+									(i.e the data was not found).
+									An implementation MUST NOT send a PRI response with no NLRI payload, this is considered to be invalid.
+								</t>
+							</list>
+						</t>
+						<t>
+							NS TLVs MAY be rate limited by the receiver as part of OPERATIONAL rate limiting (see <xref target="SEC"/>, Security Considerations).
+						</t>
+					</section>
+				</section>
+			</section>
+		</section>					
+		<section title="On the use of STATE and DUMP TLVs">
+
+		<t>
+			The STATE TLVs use three classes of counters, defined in this document: sent counters (TXC), received counters (RXC) and current table state counters (LC).
+			The table state counters (for example number of BGP RIB entries) are exchanged only for informational purposes and they should not be subject to comparison with any local counter values.
+		</t>
+		<t>
+			Where a query of the neighbor's RXC is required to be correlated, the local TXC coupled with the sequence number SHOULD be stored and used to perform such a correlation. If a discrepancy is detected, an automated or manual Route Refresh message can be triggered (utilising Start_of_Refresh and End_of_Refresh markers) that would allow for purge of any stalled data across two BGP databases.
+		</t>
+		<t>
+			It is important to note that, as BGP is never stable it is expected that the counters will also be subject to continues value change making any comparison of their values questionable.
+		</t>
+		<t> The DUMP TLVs report information back to an operator about messages which were not accepted, from machine-readable rescued UPDATE NLRI to an entire copy of the malformed UPDATE message. These can be used for troubleshooting purposes when such a message is transmitted and the implementation gracefully continues (such as treat-as-withdraw).
+		</t>
+		
+			
+
+		</section>
+		
+		<section title="On the use of ADVISE TLVs">
+			<t>
+			   The BGP routing protocol is used with external as well as internal
+			   neighbors to propagate route advertisements.  In the case of external
+			   BGP sessions, there is typically a demarcation of administrative
+			   responsibility between the two entities.  While initial configuration
+			   and troubleshooting of these sessions is handled via offline means
+			   such as email or telephone calls, there is gap when it comes to
+			   advising a BGP neighbor of a behaviour that is occurring or will occur
+			   momentarily.  There is a need for operators to transmit a message to
+			   a BGP neighbor to notify them of a variety of types of messages.
+			   These messages typically would include those related to a planned or
+			   unplanned maintenance action.  These ADVISE messages could then be
+			   interpreted by the remote party and either parsed via logging
+			   mechanisms or viewed by a human on the remote end via the CLI.  This
+			   capability will improve operator NOC-to-NOC communication by
+			   providing a communications medium on an established and trusted BGP
+			   session between two autonomous systems.
+			</t>
+
+			<t>
+			   The reason that this method is preferred for NOC-to-NOC
+			   communications is that other offline methods do fail for a variety of
+			   reasons.  Emails to NOC aliases ahead of a planned maintenance may
+			   have ignored the mail or may have not of recorded it properly within
+			   an internal tracking system.  Even if the message was recorded
+			   properly, the staff that are on-duty at the time of the maintenance
+			   event typically are not the same staff who received the maintenance
+			   notice several days prior.  In addition, the staff on duty at the
+			   time of the event may not even be able to find the recorded event in
+			   their internal tracking systems.  The end result is that during a
+			   planned event, some subset of eBGP peers will respond to a session/
+			   peer down event with additional communications to the operator who is
+			   initiating the maintenance action.  This can be via telephone or via
+			   email, but either way, it may result in a sizeable amount of replies
+			   inquiring as to why the session is down.  
+			</t>
+			<t>
+			   The result of this is that the NOC responsible for initiating the maintenance 
+			   can be inundated with calls/emails from a variety of parties inquiring as to the
+			   status of the BGP session.  The NOC initiating the maintenance may
+			   have to further inquire with engineering staff (if they are not
+			   already aware) to find out the extent of the maintenance and
+			   communicate this back to all of the NOCs calling for additional
+			   information.  The above scenario outlines what is typical in a
+			   planned maintenance event.  In an unplanned maintenance event (the
+			   need for and immediate router upgrade/reload), the number of calls
+			   and emails will dramatically increase as more parties are unaware of
+			   the event.
+			</t>
+			<t>
+			   With the ADVISE TLV set, an operator can transmit an
+			   OPERATIONAL message just prior to initiating the maintenance specifying
+			   what event will happen, what ticket number this event is associated
+			   with and the expected duration of the event.  This message would be
+			   received by BGP peers and stored in their logs as well as
+			   any monitoring system if they have this capability.  Now, all of the
+			   BGP peers have immediate access to the information about this
+			   session, why it went down, what ticket number this is being tracked
+			   under and how long they should wait before assuming there is an
+			   actual problem.  Even smaller networks without the network management
+			   capabilities to correlate BGP events and OPERATIONAL messages would
+			   typically have an operator login to a router and examine the logs via
+			   the CLI.
+			 </t>
+			 <t> 
+				This draft specifies two types of ADVISE TLV, a DEMAND message (ADM)
+				and a STATIC message (ASM), it is anticipated that the DEMAND message 
+				will be used to send a message, on demand to the BGP neighbor, to inform them
+				of realtime events. The STATIC message can be used to provide continual,
+				"Sticky" information to the neighbor, such as a contact telephone number or 
+				e-mail address should there be a requirement to have continual access
+				to this information.
+			</t>
+
+		</section>
+		
+		<section anchor="error-handling" title="Error Handling">
+			<t>
+				An implementation MUST NOT send an OPERATIONAL message to a neighbor in response to an erroneous or malformed OPERATIONAL message.
+				Any erroneous or malformed OPERATIONAL message received SHOULD be logged for the attention of the operator and then MAY be discarded.
+			</t>
+		</section>
+		
+		
+		<section anchor="SEC" title="Security considerations">
+			<t>
+				No new security issues are introduced to the BGP protocol by this specification. 
+			</t>
+			<t>	
+				Where a request type is not supported or allowed by an implementation for some reason, the implementation MAY send an 
+				NS (<xref target="not-satisfied"/>) TLV in response, the Error subcode of this TLV SHOULD be set according to the reason
+				that this request will not be responded to.
+			</t>
+			<t>
+				Implementations MUST rate-limit the rate at which they transmit and receive OPERATIONAL messages. 
+				Specifically, an implementation MUST NOT allow the handling of OPERATIONAL messages to negatively
+				impact any other functions on a router such as regular BGP message handling or other routing protocols.
+			</t>
+			<t>
+				Although an NS error subcode is provided to indicate that a request was rate-limited, an implementation need not reply to 
+				a request at all, this is the suggested course of action when rate-limiting the sending of responses
+				to a neighbor.
+			</t>
+			<t>
+				An implementation MAY send an MP (<xref target="max-permitted"/>) TLV to indicate the maximum rate at which it will accept 
+				OPERATIONAL messages from a neighbor, upon receipt of this TLV the sender MUST ensure it does not transmit above this rate
+				for the duration of the session. 
+			</t>
+			<t>
+				An implementation, considering a request to be too computationally expensive, 
+				MAY reply with the "Busy" NS error subcode to indicate such, though the implementation need not reply to the request.
+			</t>
+			<t> 
+				Implementations MUST provide a mechanism for preventing access to information requested by SSR (<xref target="simple-state-request"/>) messages
+				for the operator. Implementations SHOULD ensure that responses concerning the Loc-RIB (PRI with L-Bit set or responses which would set the L-Bit)
+				are filtered in the default configuration. 
+			</t>
+		</section>
+		<section title="IANA Considerations">
+			<t>
+				IANA is requested to allocate a type code for the OPERATIONAL message from the BGP Message Types registry, as well as requesting a type code for the new OPERATIONAL Message Capability negotiation from BGP Capability Codes registry.
+			</t>
+			<t>
+				This document requests IANA to define and maintain a new registry named: "OPERATIONAL Message Type Values". The allocation policy is on a first come first served basis.
+			</t>
+			<t>
+				This document makes the following assignments for the OPERATIONAL 
+				Message Type Values:
+		</t>
+		
+		<t>
+			<list style="hanging">
+				<t hangText="ADVISE:">
+					<vspace />
+					<list style="symbols">
+						<t>Type 1 - Advisory Demand Message (ADM)</t>
+						<t>Type 2 - Advisory Static Message (ASM)</t>
+					</list>
+				</t>
+				<t hangText="STATE:">
+					<vspace />
+					<list style="symbols">
+						<t>Type 3  - Reachable Prefix Count Request (RPCQ)</t>
+						<t>Type 4  - Reachable Prefix Count Response (RPCP)</t>
+						<t>Type 5  - Adj-RIB-Out Prefix Count Request (APCQ)</t>
+						<t>Type 6  - Adj-RIB-Out Prefix Count Response (APCP)</t>
+						<t>Type 7  - Loc-Rib Prefix Count Request (LPCQ)</t>
+						<t>Type 8  - Loc-Rib Prefix Count Response (LPCP)</t>
+						<t>Type 9  - Simple State Request (SSQ)</t>
+					</list>
+				</t>
+				<t hangText="DUMP:">
+					<vspace />
+					<list style="symbols">		
+						<t>Type 10 - Dropped Update Prefixes (DUP)</t>  
+						<t>Type 11 - Malformed Update Prefixes (MUP)</t>
+						<t>Type 12 - Malformed Update Dump (MUD)</t>  
+						<t>Type 13 - Simple State Response (SSP)</t>
+					</list>  
+				</t>
+				<t hangText="CONTROL:">
+					<vspace />
+					<list style="symbols">
+						<t>Type 65534 - Max Permitted (MP)</t>
+						<t>Type 65535 - Not Satisfied (NS)</t>
+					</list>
+				</t>
+			</list>
+		</t>
+		</section>
+		<section anchor="ACK" title="Acknowledgements">
+			<t>
+			This memo is based on existing works <xref target="I-D.ietf-idr-advisory"/> and <xref target="I-D.raszuk-bgp-diagnostic-message"/> which describe a number of operational message types documented here. The authors would like to thank Enke Chen, Bruno Decraene, Alton Lo, Tom Scholl, John Scudder and Richard Steenbergen for their valuable input. 
+            </t>
+		</section>
+	</middle>
+	<back>
+		<references title="Normative References">
+			  &RFC1997;
+		      &RFC2119;
+			  &RFC4271;
+			  &RFC4360;
+			  &RFC4760;
+			  &RFC4893;
+		  	  &RFC5492;
+		</references>
+		<references title="Informative References">
+			 &draft-raszuk-bgp-diagnostic-message-02;
+			 &draft-ietf-idr-advisory-00;
+			 &draft-shakir-idr-ops-reqs-for-bgp-error-handling-01;
+			 &draft-retana-bgp-security-state-diagnostic-00;
+			 &draft-nalawade-bgp-soft-notify-01;
+			 &draft-nalawade-bgp-inform-02;
+			 &draft-jasinska-ix-bgp-route-server-02;
+		</references>
+	</back>
+</rfc>
